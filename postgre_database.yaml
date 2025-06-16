@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create PostgreSQL Database using AWS CloudFormation with Outputs
+
+Parameters:
+  DBName:
+    Description: The name of the PostgreSQL database
+    Type: String
+    Default: mydatabase
+
+  DBUser:
+    Description: The master username for the PostgreSQL database
+    Type: String
+    Default: masteruser
+    NoEcho: true
+
+  DBPassword:
+    Description: The master password for the PostgreSQL database
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    MaxLength: 41
+    ConstraintDescription: Must be between 8 and 41 characters.
+
+  DBInstanceClass:
+    Description: Database instance class
+    Type: String
+    Default: db.t3.micro
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t3.large
+
+  DBAllocatedStorage:
+    Description: The size of the database (GB)
+    Type: Number
+    Default: 20
+    MinValue: 20
+    MaxValue: 100
+
+  VPCSecurityGroup:
+    Description: Security Group for PostgreSQL access
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  PostgreSQLDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref DBName
+      Engine: postgres
+      EngineVersion: 15.4
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass: !Ref DBInstanceClass
+      VPCSecurityGroups:
+        - !Ref VPCSecurityGroup
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 7
+      DeletionProtection: false
+      MultiAZ: false
+      StorageType: gp2
+
+Outputs:
+  DBEndpoint:
+    Description: The connection endpoint of the PostgreSQL database
+    Value: !GetAtt PostgreSQLDB.Endpoint.Address
+    Export:
+      Name: PostgreSQL-Endpoint
+
+  DBPort:
+    Description: Port number for PostgreSQL
+    Value: !GetAtt PostgreSQLDB.Endpoint.Port
+    Export:
+      Name: PostgreSQL-Port
+
+  DBName:
+    Description: The name of the PostgreSQL database
+    Value: !Ref DBName
+    Export:
+      Name: PostgreSQL-DBName
+
+  DBUsername:
+    Description: The master username for the PostgreSQL database
+    Value: !Ref DBUser
+    Export:
+      Name: PostgreSQL-Username
